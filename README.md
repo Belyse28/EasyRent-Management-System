@@ -1,6 +1,6 @@
 # 🏠 EasyRent
 
-A complete Vue.js-based property rental management system with role-based access control for Admins, Landlords , and Tenants.
+A complete Vue.js-based EasyRent system with role-based access control for Admins, Landlords , and Tenants.
 
 ## ✨ Features
 
