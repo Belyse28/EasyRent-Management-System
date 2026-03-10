@@ -19,25 +19,38 @@
       <div class="form-container" @click.stop>
         <h3>{{ editingId ? 'Edit' : 'Add' }} Property</h3>
         <form @submit.prevent="handleSubmit">
+          <div v-if="authStore.currentUser.role === 'admin'" class="form-group">
+            <label>Property Owner *</label>
+            <select v-model="form.owner_id" required tabindex="1">
+              <option value="">Select Owner</option>
+              <option v-for="user in landlords" :key="user.id" :value="user.id">
+                {{ user.name }} ({{ user.username }})
+              </option>
+            </select>
+          </div>
           <div class="form-group">
             <label>Property Name *</label>
-            <input v-model="form.name" required />
+            <input v-model="form.name" required tabindex="2" />
           </div>
           <div class="form-group">
             <label>Address *</label>
-            <input v-model="form.address" required />
+            <input v-model="form.address" required tabindex="3" />
           </div>
           <div class="form-group">
             <label>Monthly Rent *</label>
-            <input v-model.number="form.rent" type="number" required />
+            <input v-model.number="form.rent" type="number" required tabindex="4" />
           </div>
           <div class="form-group">
-            <label>Property Image URL</label>
-            <input v-model="form.image" type="url" placeholder="https://example.com/image.jpg" />
+            <label>Property Image</label>
+            <input type="file" @change="handleFileChange" accept="image/*" tabindex="5" />
+            <div v-if="imagePreview" class="image-preview">
+              <img :src="imagePreview" alt="Preview" />
+            </div>
+            <small v-if="form.image && !imagePreview" style="color: #6b7280;">Current: {{ form.image }}</small>
           </div>
           <div class="form-actions">
-            <button type="submit" class="btn-primary">{{ editingId ? 'Update' : 'Add' }}</button>
-            <button type="button" @click="showForm = false" class="btn-cancel">Cancel</button>
+            <button type="submit" class="btn-primary" tabindex="6">{{ editingId ? 'Update' : 'Add' }}</button>
+            <button type="button" @click="showForm = false" class="btn-cancel" tabindex="7">Cancel</button>
           </div>
         </form>
       </div>
@@ -74,6 +87,7 @@
           <th>Name</th>
           <th>Address</th>
           <th>Rent</th>
+          <th v-if="authStore.currentUser.role === 'admin'">Owner</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
@@ -84,6 +98,7 @@
           <td>{{ property.name }}</td>
           <td>{{ property.address }}</td>
           <td>{{ property.rent }} RWF</td>
+          <td v-if="authStore.currentUser.role === 'admin'">{{ property.owner_name }}</td>
           <td><span :class="['status', property.status.toLowerCase()]">{{ property.status }}</span></td>
           <td>
             <button @click="editProperty(property)" class="btn-edit">Edit</button>
@@ -97,7 +112,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { usePropertyStore } from '../stores/property'
 import { useAuthStore } from '../stores/auth'
 
@@ -107,15 +122,25 @@ const propertyStore = usePropertyStore()
 const authStore = useAuthStore()
 
 const properties = computed(() => propertyStore.getProperties)
+const landlords = ref([])
 const showForm = ref(false)
 const editingId = ref(null)
-const form = ref({ name: '', address: '', rent: 0, image: '' })
+const form = ref({ name: '', address: '', rent: 0, image: '', imageFile: null, owner_id: '' })
+const imagePreview = ref(null)
 const showAssignForm = ref(false)
 const selectedProperty = ref(null)
 const tenantForm = ref({ name: '', email: '', contact: '' })
 
+onMounted(async () => {
+  if (authStore.currentUser.role === 'admin') {
+    await authStore.fetchUsers()
+    landlords.value = authStore.users.filter(u => u.role === 'landlord')
+  }
+})
+
 const resetForm = () => {
-  form.value = { name: '', address: '', rent: 0, image: '' }
+  form.value = { name: '', address: '', rent: 0, image: '', imageFile: null, owner_id: '' }
+  imagePreview.value = null
 }
 
 const editProperty = (property) => {
@@ -124,18 +149,31 @@ const editProperty = (property) => {
   showForm.value = true
 }
 
-const handleSubmit = () => {
+const handleFileChange = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    form.value.imageFile = file
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      imagePreview.value = e.target.result
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+const handleSubmit = async () => {
   try {
     const data = {
       ...form.value,
-      ownerId: authStore.currentUser.id
+      owner_id: authStore.currentUser.role === 'admin' ? form.value.owner_id : authStore.currentUser.id
     }
     
     if (editingId.value) {
-      propertyStore.updateProperty(editingId.value, data)
+      await propertyStore.updateProperty(editingId.value, data)
       emit('alert', 'Property updated successfully', 'success')
     } else {
-      propertyStore.addProperty(data)
+      await propertyStore.addProperty(data)
       emit('alert', 'Property added successfully', 'success')
     }
     
@@ -170,11 +208,12 @@ const handleAssignTenant = async () => {
     
     const tenantData = {
       ...tenantForm.value,
-      propertyId: selectedProperty.value.id,
-      landlordId: authStore.currentUser.id
+      property_id: selectedProperty.value.id,
+      landlord_id: authStore.currentUser.id
     }
     
-    tenantStore.addTenant(tenantData)
+    await tenantStore.addTenant(tenantData)
+    await propertyStore.fetchProperties() // Refresh properties to show updated status
     emit('alert', 'Tenant assigned successfully', 'success')
     showAssignForm.value = false
   } catch (error) {
@@ -283,6 +322,18 @@ const handleAssignTenant = async () => {
 
 .btn-cancel:hover {
   background: #4b5563;
+}
+
+.image-preview {
+  margin-top: 10px;
+}
+
+.image-preview img {
+  max-width: 200px;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
 }
 
 table tbody tr:hover {

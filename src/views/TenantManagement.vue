@@ -33,7 +33,7 @@
           </div>
           <div class="form-group">
             <label>Property *</label>
-            <select v-model.number="form.propertyId" required>
+            <select v-model.number="form.property_id" required>
               <option value="">Select Property</option>
               <option v-for="prop in availableProperties" :key="prop.id" :value="prop.id">
                 {{ prop.name }} - {{ prop.address }}
@@ -55,6 +55,7 @@
           <th>Name</th>
           <th>Email</th>
           <th>Contact</th>
+          <th>Property ID</th>
           <th>Property</th>
           <th>Actions</th>
         </tr>
@@ -65,7 +66,8 @@
           <td>{{ tenant.name }}</td>
           <td>{{ tenant.email }}</td>
           <td>{{ tenant.contact }}</td>
-          <td>{{ getPropertyName(tenant.propertyId) }}</td>
+          <td>{{ tenant.property_id }}</td>
+          <td>{{ tenant.property_name || getPropertyName(tenant.property_id) }}</td>
           <td>
             <button @click="editTenant(tenant)" class="btn-edit">Edit</button>
             <button @click="deleteTenant(tenant.id)" class="btn-delete">Delete</button>
@@ -91,15 +93,15 @@ const authStore = useAuthStore()
 const tenants = computed(() => tenantStore.getTenants)
 const properties = computed(() => propertyStore.getProperties)
 const availableProperties = computed(() => 
-  properties.value.filter(p => p.status === 'Available' || (editingId.value && p.id === form.value.propertyId))
+  properties.value.filter(p => p.status === 'Available' || (editingId.value && p.id === form.value.property_id))
 )
 
 const showForm = ref(false)
 const editingId = ref(null)
-const form = ref({ name: '', email: '', contact: '', propertyId: '' })
+const form = ref({ name: '', email: '', contact: '', property_id: '' })
 
 const resetForm = () => {
-  form.value = { name: '', email: '', contact: '', propertyId: '' }
+  form.value = { name: '', email: '', contact: '', property_id: '' }
 }
 
 const getPropertyName = (propertyId) => {
@@ -113,18 +115,18 @@ const editTenant = (tenant) => {
   showForm.value = true
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   try {
     const data = {
       ...form.value,
-      landlordId: authStore.currentUser.id
+      landlord_id: authStore.currentUser.id
     }
     
     if (editingId.value) {
-      tenantStore.updateTenant(editingId.value, data)
+      await tenantStore.updateTenant(editingId.value, data)
       emit('alert', 'Tenant updated successfully', 'success')
     } else {
-      tenantStore.addTenant(data)
+      await tenantStore.addTenant(data)
       emit('alert', 'Tenant added successfully', 'success')
     }
     
@@ -135,10 +137,10 @@ const handleSubmit = () => {
   }
 }
 
-const deleteTenant = (id) => {
+const deleteTenant = async (id) => {
   if (confirm('Are you sure you want to delete this tenant?')) {
     try {
-      tenantStore.deleteTenant(id)
+      await tenantStore.deleteTenant(id)
       emit('alert', 'Tenant deleted successfully', 'success')
     } catch (error) {
       emit('alert', error.message, 'error')

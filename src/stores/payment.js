@@ -1,41 +1,37 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useAuthStore } from './auth'
+import api from '../services/api'
 
 export const usePaymentStore = defineStore('payment', () => {
-  const payments = ref([
-    { id: 1, tenantId: 1, propertyId: 2, amount: 200000, date: '2024-01-15', landlordId: 2 }
-  ])
+  const payments = ref([])
 
-  const getPayments = computed(() => {
-    const authStore = useAuthStore()
-    if (!authStore.currentUser) return []
-    if (authStore.currentUser.role === 'admin') return payments.value
-    return payments.value.filter(p => p.landlordId === authStore.currentUser.id)
-  })
+  const getPayments = computed(() => payments.value)
 
-  function addPayment(payment) {
+  async function fetchPayments() {
+    try {
+      payments.value = await api.getPayments()
+    } catch (error) {
+      console.error('Error fetching payments:', error)
+    }
+  }
+
+  async function addPayment(payment) {
     if (!payment.amount || payment.amount <= 0) throw new Error('Amount must be greater than zero')
     if (!payment.date) throw new Error('Date is required')
     
-    const id = Math.max(...payments.value.map(p => p.id), 0) + 1
-    const newPayment = { id, ...payment }
-    payments.value.push(newPayment)
-    return newPayment
+    await api.createPayment(payment)
+    await fetchPayments()
   }
 
-  function updatePayment(id, updates) {
-    const index = payments.value.findIndex(p => p.id === id)
-    if (index === -1) throw new Error('Payment not found')
-    payments.value[index] = { ...payments.value[index], ...updates }
-    return payments.value[index]
+  async function updatePayment(id, updates) {
+    await api.updatePayment(id, updates)
+    await fetchPayments()
   }
 
-  function deletePayment(id) {
-    const index = payments.value.findIndex(p => p.id === id)
-    if (index === -1) throw new Error('Payment not found')
-    payments.value.splice(index, 1)
+  async function deletePayment(id) {
+    await api.deletePayment(id)
+    await fetchPayments()
   }
 
-  return { payments, getPayments, addPayment, updatePayment, deletePayment }
+  return { payments, getPayments, fetchPayments, addPayment, updatePayment, deletePayment }
 })

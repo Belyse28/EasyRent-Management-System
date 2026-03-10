@@ -1,7 +1,6 @@
 # ✅ PROJECT COMPLETION SUMMARY
 
 ## 🎉 Property Rental Management System - COMPLETE
-
 ---
 
 ## 📦 Project Deliverables

@@ -321,6 +321,35 @@ td {
   outline-offset: 2px;
 }
 
+/* Enhanced tab navigation */
+input:focus, select:focus, textarea:focus, button:focus, a:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Tab navigation for table rows */
+table tbody tr {
+  cursor: pointer;
+}
+
+table tbody tr:focus-within {
+  background: #f0f4ff;
+  outline: 2px solid #667eea;
+  outline-offset: -2px;
+}
+
+/* Make buttons and interactive elements tabbable */
+.btn-edit, .btn-delete, .btn-assign, .btn-primary, .btn-cancel, .btn-add, .btn-back {
+  position: relative;
+}
+
+.btn-edit:focus, .btn-delete:focus, .btn-assign:focus {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  z-index: 1;
+}
+
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   * {

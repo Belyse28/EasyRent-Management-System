@@ -9,7 +9,7 @@
             <path d="M16 4L28 12H4L16 4Z" fill="currentColor"/>
             <rect x="12" y="18" width="4" height="6" fill="currentColor"/>
           </svg>
-          <span v-if="!sidebarCollapsed" class="logo-text">PRS</span>
+          <span v-if="!sidebarCollapsed" class="logo-text">EasyRent</span>
         </div>
         <button @click="sidebarCollapsed = !sidebarCollapsed" class="toggle-btn" aria-label="Toggle sidebar">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -269,7 +269,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { usePropertyStore } from '../stores/property'
@@ -288,11 +288,18 @@ const propertyStore = usePropertyStore()
 const tenantStore = useTenantStore()
 const paymentStore = usePaymentStore()
 
+onMounted(async () => {
+  await propertyStore.fetchProperties()
+  await tenantStore.fetchTenants()
+  await paymentStore.fetchPayments()
+  await propertyStore.fetchBookings()
+})
+
 const user = computed(() => authStore.currentUser)
 const properties = computed(() => propertyStore.getProperties)
 const tenants = computed(() => tenantStore.getTenants)
 const payments = computed(() => paymentStore.getPayments)
-const totalPayments = computed(() => payments.value.reduce((sum, p) => sum + p.amount, 0))
+const totalPayments = computed(() => payments.value.reduce((sum, p) => sum + Number(p.amount), 0))
 
 const sidebarCollapsed = ref(false)
 const currentView = ref('dashboard')
@@ -310,7 +317,7 @@ const occupancyRate = computed(() => {
   if (properties.value.length === 0) return 0
   return Math.round((properties.value.filter(p => p.status === 'Occupied').length / properties.value.length) * 100)
 })
-const monthlyPotential = computed(() => properties.value.reduce((sum, p) => sum + p.rent, 0))
+const monthlyPotential = computed(() => properties.value.reduce((sum, p) => sum + Number(p.rent), 0))
 const recentProperties = computed(() => properties.value.slice(0, 5))
 
 const pageTitle = computed(() => {
@@ -963,6 +970,49 @@ const currentComponent = computed(() => {
 *:focus-visible {
   outline: 2px solid var(--primary-500);
   outline-offset: 2px;
+}
+
+/* Enable tab navigation for all interactive elements */
+input, select, textarea, button, a, [tabindex] {
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus, button:focus, a:focus, [tabindex]:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Tab navigation for form elements */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Tab navigation for buttons */
+.btn-primary:focus,
+.btn-cancel:focus,
+.btn-edit:focus,
+.btn-delete:focus,
+.btn-add:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Tab navigation for table rows */
+table tbody tr:focus-within {
+  background: #f0f4ff;
+  outline: 2px solid #667eea;
+}
+
+/* Tab navigation for navigation items */
+.nav-item:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* Reduced Motion */

@@ -17,6 +17,14 @@
           <input id="password" v-model="form.password" type="password" required />
         </div>
         <div v-if="isRegister" class="form-group">
+          <label for="role">Role *</label>
+          <select id="role" v-model="form.role" required>
+            <option value="">Select Role</option>
+            <option value="tenant">Tenant</option>
+            <option value="landlord">Landlord</option>
+          </select>
+        </div>
+        <div v-if="isRegister" class="form-group">
           <label for="email">Email *</label>
           <input id="email" v-model="form.email" type="email" required />
         </div>
@@ -27,7 +35,7 @@
         <button type="submit" class="btn-primary">{{ isRegister ? 'Register' : 'Login' }}</button>
       </form>
       <button @click="isRegister = !isRegister" class="btn-toggle">
-        {{ isRegister ? 'Already have an account? Login' : 'New tenant? Register here' }}
+        {{ isRegister ? 'Already have an account? Login' : "Don't have an account? Register here" }}
       </button>
     </div>
   </div>
@@ -47,19 +55,20 @@ const form = ref({
   username: '',
   password: '',
   name: '',
+  role: '',
   email: '',
   contact: ''
 })
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   try {
     if (isRegister.value) {
-      authStore.register(form.value)
+      await authStore.register(form.value)
       emit('alert', 'Registration successful! Please login.', 'success')
       isRegister.value = false
-      form.value = { username: '', password: '', name: '', email: '', contact: '' }
+      form.value = { username: '', password: '', name: '', role: '', email: '', contact: '' }
     } else {
-      authStore.login(form.value.username, form.value.password)
+      await authStore.login(form.value.username, form.value.password)
       emit('alert', 'Login successful', 'success')
       router.push('/dashboard')
     }

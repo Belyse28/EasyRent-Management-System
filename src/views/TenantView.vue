@@ -4,7 +4,7 @@
     
     <div class="properties-grid">
       <article v-for="property in availableProperties" :key="property.id" class="property-card">
-        <img :src="property.image" :alt="property.name" class="property-image" />
+        <img :src="property.image?.startsWith('http') ? property.image : 'http://localhost:3000' + property.image" :alt="property.name" class="property-image" />
         <div class="property-content">
           <h3>{{ property.name }}</h3>
           <p class="address">{{ property.address }}</p>

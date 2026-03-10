@@ -21,18 +21,18 @@
         <form @submit.prevent="handleSubmit">
           <div class="form-group">
             <label>Tenant *</label>
-            <select v-model.number="form.tenantId" required>
+            <select v-model.number="form.tenant_id" @change="onTenantChange" required>
               <option value="">Select Tenant</option>
               <option v-for="tenant in tenants" :key="tenant.id" :value="tenant.id">
-                {{ tenant.name }}
+                {{ tenant.name }} (Property: {{ tenant.property_name || 'N/A' }})
               </option>
             </select>
           </div>
           <div class="form-group">
             <label>Property *</label>
-            <select v-model.number="form.propertyId" required>
+            <select v-model.number="form.property_id" required :disabled="!form.tenant_id">
               <option value="">Select Property</option>
-              <option v-for="prop in properties" :key="prop.id" :value="prop.id">
+              <option v-for="prop in filteredProperties" :key="prop.id" :value="prop.id">
                 {{ prop.name }}
               </option>
             </select>
@@ -67,8 +67,8 @@
       <tbody>
         <tr v-for="payment in payments" :key="payment.id">
           <td>{{ payment.id }}</td>
-          <td>{{ getTenantName(payment.tenantId) }}</td>
-          <td>{{ getPropertyName(payment.propertyId) }}</td>
+          <td>{{ payment.tenant_name || getTenantName(payment.tenant_id) }}</td>
+          <td>{{ payment.property_name || getPropertyName(payment.property_id) }}</td>
           <td>{{ payment.amount }} RWF</td>
           <td>{{ payment.date }}</td>
           <td>
@@ -101,12 +101,21 @@ const properties = computed(() => propertyStore.getProperties)
 
 const showForm = ref(false)
 const editingId = ref(null)
-const form = ref({ tenantId: '', propertyId: '', amount: 0, date: '' })
+const form = ref({ tenant_id: '', property_id: '', amount: 0, date: '' })
 
 const resetForm = () => {
   const today = new Date().toISOString().split('T')[0]
-  form.value = { tenantId: '', propertyId: '', amount: 0, date: today }
+  form.value = { tenant_id: '', property_id: '', amount: 0, date: today }
 }
+
+const filteredProperties = computed(() => {
+  if (!form.value.tenant_id) return properties.value
+  const selectedTenant = tenants.value.find(t => t.id === form.value.tenant_id)
+  if (selectedTenant?.property_id) {
+    return properties.value.filter(p => p.id === selectedTenant.property_id)
+  }
+  return properties.value
+})
 
 const getTenantName = (tenantId) => {
   const tenant = tenantStore.tenants.find(t => t.id === tenantId)
@@ -118,24 +127,33 @@ const getPropertyName = (propertyId) => {
   return property ? property.name : 'N/A'
 }
 
+const onTenantChange = () => {
+  const selectedTenant = tenants.value.find(t => t.id === form.value.tenant_id)
+  if (selectedTenant?.property_id) {
+    form.value.property_id = selectedTenant.property_id
+  } else {
+    form.value.property_id = ''
+  }
+}
+
 const editPayment = (payment) => {
   editingId.value = payment.id
   form.value = { ...payment }
   showForm.value = true
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   try {
     const data = {
       ...form.value,
-      landlordId: authStore.currentUser.id
+      landlord_id: authStore.currentUser.id
     }
     
     if (editingId.value) {
-      paymentStore.updatePayment(editingId.value, data)
+      await paymentStore.updatePayment(editingId.value, data)
       emit('alert', 'Payment updated successfully', 'success')
     } else {
-      paymentStore.addPayment(data)
+      await paymentStore.addPayment(data)
       emit('alert', 'Payment added successfully', 'success')
     }
     
@@ -146,10 +164,10 @@ const handleSubmit = () => {
   }
 }
 
-const deletePayment = (id) => {
+const deletePayment = async (id) => {
   if (confirm('Are you sure you want to delete this payment?')) {
     try {
-      paymentStore.deletePayment(id)
+      await paymentStore.deletePayment(id)
       emit('alert', 'Payment deleted successfully', 'success')
     } catch (error) {
       emit('alert', error.message, 'error')
