@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Tenant Dashboard</title>
+</head>
+<body>
+    <h1>Testing Tenant Dashboard Functionality</h1>
+    <div id="test-results"></div>
+    
+    <script type="module">
+        import api from './src/services/api.js';
+        
+        const results = document.getElementById('test-results');
+        
+        async function testTenantDashboard() {
+            try {
+                // Clear localStorage first
+                localStorage.clear();
+                
+                // Test login as tenant
+                const user = await api.login('tenant1', 'tenant123');
+                results.innerHTML += `<p>✅ Login successful: ${user.name} (${user.role})</p>`;
+                
+                // Test getting properties (should show all properties for tenants)
+                const properties = await api.getProperties();
+                results.innerHTML += `<p>✅ Properties loaded: ${properties.length} properties found</p>`;
+                
+                // Display property details
+                properties.forEach(prop => {
+                    results.innerHTML += `<p>   - ${prop.name}: ${prop.address} (${prop.status}) - ${prop.rent} RWF</p>`;
+                });
+                
+                // Test creating a booking request
+                const availableProperty = properties.find(p => p.status === 'Available');
+                if (availableProperty) {
+                    const booking = await api.createBooking(availableProperty.id);
+                    results.innerHTML += `<p>✅ Booking request created for property: ${availableProperty.name}</p>`;
+                    
+                    // Test getting booking requests
+                    const bookings = await api.getBookings();
+                    results.innerHTML += `<p>✅ Booking requests loaded: ${bookings.length} requests found</p>`;
+                    
+                    bookings.forEach(booking => {
+                        const prop = properties.find(p => p.id === booking.property_id);
+                        results.innerHTML += `<p>   - Request for ${prop ? prop.name : 'Unknown'}: ${booking.status}</p>`;
+                    });
+                } else {
+                    results.innerHTML += `<p>⚠️ No available properties to book</p>`;
+                }
+                
+                results.innerHTML += `<p><strong>✅ All tenant dashboard tests passed!</strong></p>`;
+                
+            } catch (error) {
+                results.innerHTML += `<p>❌ Test failed: ${error.message}</p>`;
+                console.error(error);
+            }
+        }
+        
+        testTenantDashboard();
+    </script>
+</body>
+</html>

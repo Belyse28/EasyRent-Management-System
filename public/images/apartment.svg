@@ -1,0 +1,39 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#87CEEB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E0F6FF;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#D3D3D3;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A9A9A9;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Sky background -->
+  <rect width="400" height="150" fill="url(#skyGrad)"/>
+  
+  <!-- Ground -->
+  <rect y="150" width="400" height="150" fill="#90EE90"/>
+  
+  <!-- Building -->
+  <rect x="50" y="80" width="300" height="200" fill="url(#buildingGrad)" stroke="#808080" stroke-width="2"/>
+  
+  <!-- Windows -->
+  <rect x="80" y="110" width="40" height="30" fill="#87CEEB" stroke="#4682B4" stroke-width="1"/>
+  <rect x="140" y="110" width="40" height="30" fill="#87CEEB" stroke="#4682B4" stroke-width="1"/>
+  <rect x="200" y="110" width="40" height="30" fill="#87CEEB" stroke="#4682B4" stroke-width="1"/>
+  <rect x="260" y="110" width="40" height="30" fill="#87CEEB" stroke="#4682B4" stroke-width="1"/>
+  
+  <rect x="80" y="160" width="40" height="30" fill="#87CEEB" stroke="#4682B4" stroke-width="1"/>
+  <rect x="140" y="160" width="40" height="30" fill="#87CEEB" stroke="#4682B4" stroke-width="1"/>
+  <rect x="200" y="160" width="40" height="30" fill="#87CEEB" stroke="#4682B4" stroke-width="1"/>
+  <rect x="260" y="160" width="40" height="30" fill="#87CEEB" stroke="#4682B4" stroke-width="1"/>
+  
+  <!-- Door -->
+  <rect x="170" y="220" width="60" height="60" fill="#8B4513" stroke="#654321" stroke-width="2"/>
+  <circle cx="215" cy="250" r="3" fill="#FFD700"/>
+  
+  <!-- Title -->
+  <text x="200" y="25" text-anchor="middle" fill="#2F4F4F" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Modern Apartment</text>
+</svg>

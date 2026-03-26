@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Storage & Test Images</title>
+</head>
+<body>
+    <h1>Clear Storage & Test Property Images</h1>
+    <button onclick="clearStorage()">Clear Storage & Reload Data</button>
+    <div id="results"></div>
+    
+    <script type="module">
+        import api from './src/services/api.js';
+        
+        window.clearStorage = async function() {
+            // Clear all localStorage
+            localStorage.clear();
+            
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>✅ Storage cleared</p>';
+            
+            try {
+                // Login as tenant to initialize data
+                await api.login('tenant1', 'tenant123');
+                results.innerHTML += '<p>✅ Data reinitialized</p>';
+                
+                // Get properties to verify images
+                const properties = await api.getProperties();
+                results.innerHTML += `<p>✅ Properties loaded: ${properties.length}</p>`;
+                
+                // Display properties with images
+                properties.forEach(prop => {
+                    results.innerHTML += `
+                        <div style="border: 1px solid #ccc; margin: 10px; padding: 10px;">
+                            <h3>${prop.name}</h3>
+                            <p>${prop.address} - ${prop.rent} RWF</p>
+                            <p>Status: ${prop.status}</p>
+                            <img src="${prop.image}" alt="${prop.name}" style="width: 200px; height: 150px; object-fit: cover; border-radius: 8px;" 
+                                 onerror="this.src='https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop'">
+                        </div>
+                    `;
+                });
+                
+            } catch (error) {
+                results.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

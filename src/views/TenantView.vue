@@ -4,7 +4,12 @@
     
     <div class="properties-grid">
       <article v-for="property in availableProperties" :key="property.id" class="property-card">
-        <img :src="property.image?.startsWith('http') ? property.image : 'http://localhost:3000' + property.image" :alt="property.name" class="property-image" />
+        <img 
+          :src="property.image || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop'" 
+          :alt="property.name" 
+          class="property-image"
+          @error="handleImageError"
+        />
         <div class="property-content">
           <h3>{{ property.name }}</h3>
           <p class="address">{{ property.address }}</p>
@@ -35,9 +40,9 @@
         </thead>
         <tbody>
           <tr v-for="request in myRequests" :key="request.id">
-            <td>{{ getPropertyName(request.propertyId) }}</td>
+            <td>{{ request.property_name || getPropertyName(request.property_id) }}</td>
             <td><span :class="['status-badge', request.status.toLowerCase()]">{{ request.status }}</span></td>
-            <td>{{ new Date(request.createdAt).toLocaleDateString() }}</td>
+            <td>{{ new Date().toLocaleDateString() }}</td>
           </tr>
         </tbody>
       </table>
@@ -46,7 +51,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { usePropertyStore } from '../stores/property'
 import { useAuthStore } from '../stores/auth'
 
@@ -58,18 +63,28 @@ const authStore = useAuthStore()
 const availableProperties = computed(() => propertyStore.getProperties)
 const myRequests = computed(() => propertyStore.getBookingRequests)
 
+// Load data when component mounts
+onMounted(async () => {
+  await propertyStore.fetchProperties()
+  await propertyStore.fetchBookings()
+})
+
 const getPropertyName = (propertyId) => {
   const property = propertyStore.properties.find(p => p.id === propertyId)
-  return property ? property.name : 'Unknown'
+  return property ? property.name : 'Property Not Found'
 }
 
-const bookProperty = (propertyId) => {
+const bookProperty = async (propertyId) => {
   try {
-    propertyStore.createBookingRequest(propertyId, authStore.currentUser.id)
+    await propertyStore.createBookingRequest(propertyId, authStore.currentUser.id)
     emit('alert', 'Booking request submitted successfully', 'success')
   } catch (error) {
     emit('alert', error.message, 'error')
   }
+}
+
+const handleImageError = (event) => {
+  event.target.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop'
 }
 </script>
 

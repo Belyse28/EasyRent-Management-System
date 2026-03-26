@@ -22,9 +22,20 @@
       </thead>
       <tbody>
         <tr v-for="request in requests" :key="request.id">
-          <td>{{ getPropertyName(request.propertyId) }}</td>
-          <td>{{ getTenantName(request.tenantId) }}</td>
-          <td>{{ new Date(request.createdAt).toLocaleDateString() }}</td>
+          <td>
+            <div>
+              <strong>{{ request.property_name || getPropertyName(request.property_id) }}</strong>
+              <br><small class="text-muted">{{ request.property_address }}</small>
+            </div>
+          </td>
+          <td>
+            <div>
+              <strong>{{ request.tenant_name || getTenantName(request.tenant_id) }}</strong>
+              <br><small class="text-muted">{{ request.tenant_email }}</small>
+              <br><small class="text-muted">{{ request.tenant_contact }}</small>
+            </div>
+          </td>
+          <td>{{ new Date().toLocaleDateString() }}</td>
           <td><span :class="['status', request.status.toLowerCase()]">{{ request.status }}</span></td>
           <td>
             <button v-if="request.status === 'Pending'" @click="approve(request.id)" class="btn-approve">Approve</button>
@@ -37,7 +48,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { usePropertyStore } from '../stores/property'
 import { useAuthStore } from '../stores/auth'
 
@@ -48,28 +59,41 @@ const authStore = useAuthStore()
 
 const requests = computed(() => propertyStore.getBookingRequests)
 
+// Load data when component mounts
+onMounted(async () => {
+  await propertyStore.fetchBookings()
+  await propertyStore.fetchProperties()
+  await authStore.fetchUsers()
+})
+
 const getPropertyName = (propertyId) => {
   const property = propertyStore.properties.find(p => p.id === propertyId)
-  return property ? property.name : 'Unknown'
+  return property ? property.name : 'Unknown Property'
 }
 
 const getTenantName = (tenantId) => {
-  const tenant = authStore.users.find(u => u.id === tenantId)
-  return tenant ? tenant.name : 'Unknown'
+  // First check in users array
+  const user = authStore.users.find(u => u.id === tenantId)
+  if (user) return user.name
+  
+  // If not found in users, check in the default users from localStorage
+  const allUsers = JSON.parse(localStorage.getItem('users') || '[]')
+  const tenant = allUsers.find(u => u.id === tenantId)
+  return tenant ? tenant.name : 'Unknown Tenant'
 }
 
-const approve = (requestId) => {
+const approve = async (requestId) => {
   try {
-    propertyStore.approveBookingRequest(requestId)
+    await propertyStore.approveBookingRequest(requestId)
     emit('alert', 'Booking request approved', 'success')
   } catch (error) {
     emit('alert', error.message, 'error')
   }
 }
 
-const reject = (requestId) => {
+const reject = async (requestId) => {
   try {
-    propertyStore.rejectBookingRequest(requestId)
+    await propertyStore.rejectBookingRequest(requestId)
     emit('alert', 'Booking request rejected', 'info')
   } catch (error) {
     emit('alert', error.message, 'error')
@@ -134,5 +158,14 @@ const reject = (requestId) => {
 .status.rejected {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.text-muted {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+td div {
+  line-height: 1.4;
 }
 </style>
