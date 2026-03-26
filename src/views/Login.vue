@@ -36,27 +36,11 @@
             <div class="demo-accounts">
               <h3>Demo Accounts</h3>
               <div class="demo-grid">
-                <div class="demo-card">
-                  <div class="demo-content">
-                    <div class="demo-role">Admin</div>
-                    <div class="demo-creds">admin / admin123</div>
-                    <div class="demo-desc">Full system access</div>
-                  </div>
-                </div>
-                <div class="demo-card">
-                  <div class="demo-content">
-                    <div class="demo-role">Landlord</div>
-                    <div class="demo-creds">landlord1 / land123</div>
-                    <div class="demo-desc">Manage properties</div>
-                  </div>
-                </div>
-                <div class="demo-card">
-                  <div class="demo-content">
-                    <div class="demo-role">Tenant</div>
-                    <div class="demo-creds">tenant1 / tenant123</div>
-                    <div class="demo-desc">Browse & book properties</div>
-                  </div>
-                </div>
+              <p class="demo-creds">admin / admin123</p>
+              <p class="demo-creds">landlord1 / land123</p>
+              <div class="demo-creds">tenant1 / tenant123</div>
+              
+
               </div>
             </div>
           </div>
